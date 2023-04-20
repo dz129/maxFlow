@@ -1,5 +1,6 @@
 from flownetwork import *
 
+
 def schedule(stationcounts, stationtimes, employeetraining, employeetimes):
     """station counts: a list of length 4 containing (in order):
     number of employees per shift on blending
@@ -16,78 +17,48 @@ def schedule(stationcounts, stationtimes, employeetraining, employeetimes):
     employeetraining: index i contains the list of stations that employee i is trained to work on
     empolyeetimes: index i contains the list of times that employee i can work
     """
-    #sets a dictionary of employees that that takes their shift and the station they can work in
+    maxFlowGraph = flownetwork("s", "t")
+    
 
-    employeeTimeandTrain = []
+
+
     for i in range(len(employeetimes)):
-        temp = {}
-        temp[employeetimes[i]] = employeetraining[i]
-        employeeTimeandTrain.append(temp)
-
-    
-    #gives all the times of shifts
-    totalShiftTimes = []
-    for k in employeeTimeandTrain:
-        for i in k.keys():
-            if i not in totalShiftTimes:
-                totalShiftTimes.append(i)
-
-        
-    #graph will connect the number of shifts a employee can take into the root node
-    #so employee with 4 shifts root -> 4 -> employee
-    #then it will connect those shifts to stations lets say this employee cooks and strain
-    # root -> 4 -> employee -> shifts (4 different shifts) -> stations
-    #shift will only connect to stations if the station has that shift
-    #the number of shift to station will be the amount of people needed per shift for that station
-    # station needing 4 people per shift : shiftA -> 4 -> station , shiftB -> 4 -> station
-    graph = flownetwork("start", "end")
-    #adds the jobs
-    #need to add all the shifts to these nodes later
-    graph.add_node("b")
-    graph.add_node("c")
-    graph.add_node("s")
-    graph.add_node("f")
-    #adds all shift times
-    for i in totalShiftTimes:
-        graph.add_node(i)
-
-    for i in employeeTimeandTrain:
-        #need to add start to these
-        #the edge weight would be the number of shifts the employee worked
-        name = str(i)
-        graph.add_node(name)
-        count = 0
-        for times in i.keys():
-            for time in times:
-                graph.add_edge(name,time,1)
-                count += 1
-        graph.add_edge("start",name,count)
-
-    #add shift times to each station
+        maxFlowGraph.add_edge("s", "e" + str(i), len(employeetimes[i]))
+        for j in employeetimes[i]:
+            maxFlowGraph.add_edge("e" + str(i), "e" + str(i) + "t" + str(j), 1)
     for i in range(len(stationtimes)):
-        for time in stationtimes[i]:
-            if (i == 0):
-                graph.add_edge(time, "b", stationcounts[i])
-            if (i == 1):
-                graph.add_edge(time, "c", stationcounts[i])
-            if (i == 2):
-                graph.add_edge(time, "s", stationcounts[i])
-            if (i == 3):
-                graph.add_edge(time, "f", stationcounts[i])
-    
-    for i in range(len(stationtimes)):
-        total = len(stationtimes[i])
-        if (i == 0):
-            graph.add_edge("b","end",stationcounts[i] * total)
-        if (i == 0):
-            graph.add_edge("c","end",stationcounts[i] * total)
-        if (i == 0):
-            graph.add_edge("s","end",stationcounts[i] * total)
-        if (i == 0):
-            graph.add_edge("f","end",stationcounts[i] * total)
-    print(graph.toString()) 
-
-            
+        for j in stationtimes[i]:
+            if i == 0:
+                maxFlowGraph.add_edge("b" + str(j), "t", stationcounts[i])
+            if i == 1:
+                maxFlowGraph.add_edge("c" + str(j), "t", stationcounts[i])
+            if i == 2:
+                maxFlowGraph.add_edge("s" + str(j), "t", stationcounts[i])
+            if i == 3:
+                maxFlowGraph.add_edge("f" + str(j), "t", stationcounts[i])
+    for i in range(len(employeetimes)):
+        for j in employeetimes[i]:
+            if "blend" in employeetraining[i]:
+                for k in stationtimes[0]:
+                    if k == j:
+                        maxFlowGraph.add_edge("e" + str(i) + "t" + str(j), "b" + str(k), 1)
+            if "cook" in employeetraining[i]:
+                for k in stationtimes[1]:
+                    if k == j:
+                        maxFlowGraph.add_edge("e" + str(i) + "t" + str(j), "c" + str(k), 1)
+            if "strain" in employeetraining[i]:
+                for k in stationtimes[2]:
+                    if k == j:
+                        maxFlowGraph.add_edge("e" + str(i) + "t" + str(j), "s" + str(k), 1)
+            if "finish" in employeetraining[i]:
+                for k in stationtimes[3]:
+                    if k == j:
+                        maxFlowGraph.add_edge("e" + str(i) + "t" + str(j), "f" + str(k), 1)
+    print(maxFlowGraph)
+    need = 0
+    for i in range(len(stationcounts)):
+        need += stationcounts[i] * len(stationtimes[i])
+    return (maxFlowGraph.maxflow == need)
     
 
 
