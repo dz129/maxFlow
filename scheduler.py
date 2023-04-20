@@ -17,49 +17,58 @@ def schedule(stationcounts, stationtimes, employeetraining, employeetimes):
     employeetraining: index i contains the list of stations that employee i is trained to work on
     empolyeetimes: index i contains the list of times that employee i can work
     """
-    maxFlowGraph = flownetwork("s", "t")
-    
-
-
+    maxFlowGraph = flownetwork("start", "end")
 
     for i in range(len(employeetimes)):
-        maxFlowGraph.add_edge("s", "e" + str(i), len(employeetimes[i]))
-        for j in employeetimes[i]:
-            maxFlowGraph.add_edge("e" + str(i), "e" + str(i) + "t" + str(j), 1)
-    for i in range(len(stationtimes)):
-        for j in stationtimes[i]:
-            if i == 0:
-                maxFlowGraph.add_edge("b" + str(j), "t", stationcounts[i])
-            if i == 1:
-                maxFlowGraph.add_edge("c" + str(j), "t", stationcounts[i])
-            if i == 2:
-                maxFlowGraph.add_edge("s" + str(j), "t", stationcounts[i])
-            if i == 3:
-                maxFlowGraph.add_edge("f" + str(j), "t", stationcounts[i])
+        maxFlowGraph.add_node("e:" + str(i))
+        maxFlowGraph.add_edge("start", "e:" + str(i), len(employeetimes[i]))
+        for j in range(len(employeetimes[i])):
+            maxFlowGraph.add_node("e:" + str(i) + "t: " + str(employeetimes[i][j]))
+            maxFlowGraph.add_edge("e:" + str(i), "e:" + str(i) + "t: " + str(employeetimes[i][j]), 1)
+
     for i in range(len(employeetimes)):
-        for j in employeetimes[i]:
+        for j in range(len(employeetimes[i])):
+            employeetimeNode = "e:" + str(i) + "t: " + str(employeetimes[i][j])
             if "blend" in employeetraining[i]:
-                for k in stationtimes[0]:
-                    if k == j:
-                        maxFlowGraph.add_edge("e" + str(i) + "t" + str(j), "b" + str(k), 1)
+                for k in range(len(stationtimes[0])):
+                    if stationtimes[0][k] == employeetimes[i][j]:
+                        timenode = "b" + str(stationtimes[0][k])
+                        maxFlowGraph.add_node(timenode)
+                        maxFlowGraph.add_edge(employeetimeNode, timenode, 1)
             if "cook" in employeetraining[i]:
-                for k in stationtimes[1]:
-                    if k == j:
-                        maxFlowGraph.add_edge("e" + str(i) + "t" + str(j), "c" + str(k), 1)
+                for k in range(len(stationtimes[1])):
+                    if stationtimes[1][k] == employeetimes[i][j]:
+                        timenode = "c" + str(stationtimes[1][k])
+                        maxFlowGraph.add_node(timenode)
+                        maxFlowGraph.add_edge(employeetimeNode, timenode, 1)
             if "strain" in employeetraining[i]:
-                for k in stationtimes[2]:
-                    if k == j:
-                        maxFlowGraph.add_edge("e" + str(i) + "t" + str(j), "s" + str(k), 1)
+                for k in range(len(stationtimes[2])):
+                    if stationtimes[2][k] == employeetimes[i][j]:
+                        timenode = "s" + str(stationtimes[2][k])
+                        maxFlowGraph.add_node(timenode)
+                        maxFlowGraph.add_edge(employeetimeNode, timenode, 1)
             if "finish" in employeetraining[i]:
-                for k in stationtimes[3]:
-                    if k == j:
-                        maxFlowGraph.add_edge("e" + str(i) + "t" + str(j), "f" + str(k), 1)
+                for k in range(len(stationtimes[3])):
+                    if stationtimes[3][k] == employeetimes[i][j]:
+                        timenode = "f" + str(stationtimes[3][k])
+                        maxFlowGraph.add_node(timenode)
+                        maxFlowGraph.add_edge(employeetimeNode, timenode, 1)
+    for i in range(len(stationtimes)):
+        for j in range(len(stationtimes[i])):
+            stationtimenode = str(stationtimes[i][j])
+            if i == 0:
+                maxFlowGraph.add_edge("b" + stationtimenode, "end", stationcounts[i])
+            if i == 1:
+                maxFlowGraph.add_edge("c" + stationtimenode, "end", stationcounts[i])
+            if i == 2:
+                maxFlowGraph.add_edge("s" + stationtimenode, "end", stationcounts[i])
+            if i == 3:
+                maxFlowGraph.add_edge("f" + stationtimenode, "end", stationcounts[i])
     print(maxFlowGraph)
-    need = 0
+    total_jobs = 0
     for i in range(len(stationcounts)):
-        need += stationcounts[i] * len(stationtimes[i])
-    return (maxFlowGraph.maxflow == need)
-    
+        total_jobs += stationcounts[i] * len(stationtimes[i])
+    return (maxFlowGraph.maxflow() >= total_jobs)
 
 
 
